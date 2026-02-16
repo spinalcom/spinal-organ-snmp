@@ -1,0 +1,28 @@
+{
+	"compilerOptions": {
+		"module": "CommonJS",
+		"noImplicitAny": false,
+		"noImplicitReturns": false,
+		"noImplicitThis": true,
+		"sourceMap": true,
+		"declaration": true,
+		"declarationDir": "declarations",
+		"resolveJsonModule": true,
+		"downlevelIteration": true,
+		"baseUrl": "server",
+		"outDir": "dist",
+		"target": "es2020",
+		"skipLibCheck": true,
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true
+	},
+	"hooks": ["copy-files"],
+	"experimentalDecorators": true,
+	"paths": {
+		"@/*": ["src/*"],
+		"/@/*": ["src/*"],
+		"/@/img/*": ["src/assets/img/*"]
+	},
+	"exclude": ["node_modules", "client"],
+	"include": ["./src/**/*"]
+}

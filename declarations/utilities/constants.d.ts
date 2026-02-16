@@ -1,0 +1,1 @@
+export declare const DEFAULT_SNMP_PORT = 161;
