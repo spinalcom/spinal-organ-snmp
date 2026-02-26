@@ -1,6 +1,6 @@
 import { ISpinalInterval, IProfile, NodeToUpdate } from "../types";
 import SpinalNetworkUtils from "../utilities/NetworkUtils";
-import SpinalQueue from "../utilities/SpinalQueue";
+import { SpinalQueue } from "spinal-connector-service";
 import { MinPriorityQueue } from "@datastructures-js/priority-queue";
 import { SpinalSNMPListener } from "spinal-model-snmp";
 import SpinalDevice from "./SpinalDevice";
@@ -11,7 +11,7 @@ const spinalNetworkUtils = SpinalNetworkUtils.getInstance();
 class SpinalMonitoring {
 
     private static instance: SpinalMonitoring;
-    private _monitoringQueue: SpinalQueue = new SpinalQueue();
+    private _monitoringQueue: SpinalQueue<SpinalSNMPListener> = new SpinalQueue();
     private _priorityQueue: MinPriorityQueue<{ interval: number; nextExecution: number }> = new MinPriorityQueue({ compare: (a, b) => a.nextExecution - b.nextExecution });
     private _monitoringIsRunning: boolean = false;
     private _intervalTimesMap = new Map<number, (ISpinalInterval & { deviceId: string })[]>();
@@ -34,7 +34,7 @@ class SpinalMonitoring {
     }
 
     private async _startDevicesInitialization() {
-        const listenerModels = this._monitoringQueue.getQueue();
+        const listenerModels = this._monitoringQueue.toArray();
         this._monitoringQueue.clear();
 
         console.log(`Starting initialization of ${listenerModels.length} devices.`);

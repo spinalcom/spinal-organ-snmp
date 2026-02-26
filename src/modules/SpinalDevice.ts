@@ -51,18 +51,23 @@ class SpinalDevice extends EventEmitter {
 
 
     public async updateEndpointsValue(interval: number) {
-        const target = await this.deviceNode.info?.address?.get();
+        try {
+            const target = await this.deviceNode.info?.address?.get();
 
-        if (!target) {
-            console.error(`Device ${this.deviceNode.info.get().name} does not have an address, cannot update endpoints value.`);
-            return;
+            if (!target) {
+                console.error(`Device ${this.deviceNode.info.get().name} does not have an address, cannot update endpoints value.`);
+                return;
+            }
+
+            const nodeToUpdate = this._getNodeToUpdate(interval);
+            const oids = nodeToUpdate.map(item => item.idNetwork);
+
+            const values = await SnmpUtils.getInstance().getOidsValuesAsObject(target, oids);
+            return this._updateEndpointInGraph(nodeToUpdate, values);
+        } catch (error) {
+            console.error(`Error updating endpoints value for device [${this.deviceNode.info.get().name}] due to:`, (error as Error).message);
         }
 
-        const nodeToUpdate = this._getNodeToUpdate(interval);
-        const oids = nodeToUpdate.map(item => item.idNetwork);
-
-        const values = await SnmpUtils.getInstance().getOidsValuesAsObject(target, oids);
-        return this._updateEndpointInGraph(nodeToUpdate, values);
     }
 
 
@@ -126,7 +131,7 @@ class SpinalDevice extends EventEmitter {
         return Promise.all(promises).then(() => {
             console.log(`${new Date()} Device ${this.deviceNode.info.get().name} updated.`);
         }).catch((err) => {
-
+            console.error(`Error updating endpoints value for device [${this.deviceNode.info.get().name}] due to:`, (err as Error).message);
         });
     }
 

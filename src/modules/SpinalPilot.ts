@@ -13,15 +13,19 @@ class SpinalPilot {
 
 
     public sendPilotRequest() {
-        let requests: IRequest | IRequest[] = this.pilotModel.request.get();
+        let requests: IRequest | IRequest[] = this.pilotModel.requests.get();
         const addressToRequests = this._formatAndClassifyRequests(requests);
 
-        const promises = Object.keys(addressToRequests).map((address) => SnmpUtils.getInstance().setOidValue(address, addressToRequests[address]));
+        const promises = Object.keys(addressToRequests).map((address) => {
+            console.log("Sending pilot request to", address, "with data", addressToRequests[address]);
+            return SnmpUtils.getInstance().setOidValue(address, addressToRequests[address])
+        });
 
         return Promise.all(promises).then(() => {
             this.pilotModel.setSuccessMode();
+            console.log("Pilot request successful");
         }).catch((err) => {
-            console.log(`Error while sending pilot request du to: ${err.message}`);
+            console.log(`Error while sending pilot request due to: ${err.message}`);
             this.pilotModel.setErrorMode();
         });
 

@@ -2,13 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SpinalMonitoring = void 0;
 const NetworkUtils_1 = require("../utilities/NetworkUtils");
-const SpinalQueue_1 = require("../utilities/SpinalQueue");
+const spinal_connector_service_1 = require("spinal-connector-service");
 const priority_queue_1 = require("@datastructures-js/priority-queue");
 const Functions_1 = require("../utilities/Functions");
 const spinalNetworkUtils = NetworkUtils_1.default.getInstance();
 class SpinalMonitoring {
     constructor() {
-        this._monitoringQueue = new SpinalQueue_1.default();
+        this._monitoringQueue = new spinal_connector_service_1.SpinalQueue();
         this._priorityQueue = new priority_queue_1.MinPriorityQueue({ compare: (a, b) => a.nextExecution - b.nextExecution });
         this._monitoringIsRunning = false;
         this._intervalTimesMap = new Map();
@@ -25,7 +25,7 @@ class SpinalMonitoring {
         this._monitoringQueue.addToQueue(model);
     }
     async _startDevicesInitialization() {
-        const listenerModels = this._monitoringQueue.getQueue();
+        const listenerModels = this._monitoringQueue.toArray();
         this._monitoringQueue.clear();
         console.log(`Starting initialization of ${listenerModels.length} devices.`);
         let spinalDeviceList = await spinalNetworkUtils.initModels(listenerModels);

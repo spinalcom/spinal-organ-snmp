@@ -29,15 +29,20 @@ class SpinalDevice extends node_events_1.EventEmitter {
         return endpoints;
     }
     async updateEndpointsValue(interval) {
-        const target = await this.deviceNode.info?.address?.get();
-        if (!target) {
-            console.error(`Device ${this.deviceNode.info.get().name} does not have an address, cannot update endpoints value.`);
-            return;
+        try {
+            const target = await this.deviceNode.info?.address?.get();
+            if (!target) {
+                console.error(`Device ${this.deviceNode.info.get().name} does not have an address, cannot update endpoints value.`);
+                return;
+            }
+            const nodeToUpdate = this._getNodeToUpdate(interval);
+            const oids = nodeToUpdate.map(item => item.idNetwork);
+            const values = await SnmpUtils_1.default.getInstance().getOidsValuesAsObject(target, oids);
+            return this._updateEndpointInGraph(nodeToUpdate, values);
         }
-        const nodeToUpdate = this._getNodeToUpdate(interval);
-        const oids = nodeToUpdate.map(item => item.idNetwork);
-        const values = await SnmpUtils_1.default.getInstance().getOidsValuesAsObject(target, oids);
-        return this._updateEndpointInGraph(nodeToUpdate, values);
+        catch (error) {
+            console.error(`Error updating endpoints value for device [${this.deviceNode.info.get().name}] due to:`, error.message);
+        }
     }
     async startMonitoringWithCov(nodesToUpdate) {
         await this._initReceiver();
@@ -84,6 +89,7 @@ class SpinalDevice extends node_events_1.EventEmitter {
         return Promise.all(promises).then(() => {
             console.log(`${new Date()} Device ${this.deviceNode.info.get().name} updated.`);
         }).catch((err) => {
+            console.error(`Error updating endpoints value for device [${this.deviceNode.info.get().name}] due to:`, err.message);
         });
     }
     async _setEndpointValue(node, value) {

@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SpinalDiscover = void 0;
 const node_events_1 = require("node:events");
-const SpinalQueue_1 = require("../utilities/SpinalQueue");
+const spinal_connector_service_1 = require("spinal-connector-service");
 const spinal_model_snmp_1 = require("spinal-model-snmp");
 const config_1 = require("../config");
 const SnmpUtils_1 = require("../utilities/SnmpUtils");
@@ -14,7 +14,7 @@ const transformTreeToGraph_1 = require("../utilities/transformTreeToGraph");
 class SpinalDiscover extends node_events_1.EventEmitter {
     constructor() {
         super();
-        this.discoverRequestsQueue = new SpinalQueue_1.default();
+        this.discoverRequestsQueue = new spinal_connector_service_1.SpinalQueue();
         this.processing = false;
         this._listenQueueStartEvent(this.startDiscoverQueueProcessing.bind(this));
         this.on("discoverNextInQueue", this._discoverNextInQueue.bind(this));
@@ -76,15 +76,18 @@ class SpinalDiscover extends node_events_1.EventEmitter {
         try {
             let isCancelled = this._discoveredIsCancelled(model);
             while (index < networks.length && !isCancelled) {
+                const network = networks[index];
                 try {
-                    const tree = await this._discoverNetwork(networks[index]);
+                    console.log("Discovering network", network.address.get());
+                    const tree = await this._discoverNetwork(network);
                     discovered.push(tree);
                     const count = model.progress.finished.get() || 0;
                     model.progress.finished.set(count + 1);
+                    console.log("Finished discovering network", network.address.get());
                 }
                 catch (error) {
-                    console.log("Discovery error for network", networks[index].address.get(), ":", error.message);
-                    const count = model.progress.failed.get();
+                    console.log("Discovery error for network", network.address.get(), ":", error.message);
+                    const count = model.progress.failed.get() || 0;
                     model.progress.failed.set(count + 1);
                 }
                 index++;
@@ -112,6 +115,7 @@ class SpinalDiscover extends node_events_1.EventEmitter {
     }
     async _createNetworkInGraph(discoverModel) {
         try {
+            console.log("Creating network in graph");
             const rootTree = await discoverModel.getTreeToCreate(config_1.config.hubUrl);
             const treeToCreate = rootTree?.children[0] || null;
             const { context, organ } = await this._getContextAndOrgan(discoverModel);
@@ -120,10 +124,12 @@ class SpinalDiscover extends node_events_1.EventEmitter {
             await (0, transformTreeToGraph_1.addAllEndpointsToDevice)(context, treeToCreate.children, deviceNode, nodeAlreadyInGraph);
             return this._addDeviceToOrgan(organ, context, deviceNode).then(() => {
                 discoverModel.changeState(spinal_model_snmp_1.STATES.created);
+                console.log("Network created in graph");
                 return deviceNode;
             });
         }
         catch (error) {
+            console.log("Error creating network in graph:", error.message);
             discoverModel.changeState(spinal_model_snmp_1.STATES.error);
         }
     }
