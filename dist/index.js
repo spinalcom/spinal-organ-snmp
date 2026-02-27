@@ -19,10 +19,10 @@ const connectorInfo = {
     path: path.normalize(`${organFolderPath}/${organName}.conf`),
     model: new spinal_model_snmp_1.SpinalOrganSNMP(organName)
 };
-spinalConnectorService.initialize(connect, connectorInfo).then(({ alreadyExists, node }) => {
+spinalConnectorService.initialize(connect, connectorInfo).then(async ({ alreadyExists, node }) => {
     // Bind the restart function to PM2 events
     const pm2Management = pm2Management_1.PM2Management.getInstance();
-    const pm2Instance = pm2Management.getPm2InstanceByName(organName);
+    const pm2Instance = await pm2Management.getPm2InstanceByName(organName);
     const pm2_id = pm2Instance ? pm2Instance.pm_id : null;
     if (pm2_id !== null)
         node.restart.bind(() => pm2Management.restartProcessById(pm2_id));
